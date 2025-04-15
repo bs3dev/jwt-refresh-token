@@ -1,13 +1,12 @@
-name: Build and Pack NuGet
+name: Build, Test, Pack and Publish
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - 'v*.*.*'
 
 jobs:
-  build-and-pack:
+  build-test-pack-publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,23 +16,33 @@ jobs:
     - name: 🧰 Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '9.x'
+        dotnet-version: '8.x'
 
     - name: 📦 Restore dependencies
       run: dotnet restore
 
-    - name: 🔧 Build all projects under src/
+    - name: 🔧 Build all projects (including dependencies)
       run: dotnet build ./src --configuration Release --no-restore
 
-    - name: ✅ Run unit tests only
+    - name: ✅ Run unit tests
       run: dotnet test ./src/Tests/Jwt.Refresh.Token.Tests.Unit --no-build --configuration Release
 
-    - name: 📦 Pack NuGet (Infra.Cosmos only)
-      run: dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos \
-             --no-build --configuration Release --output ./artifacts
+    - name: 📦 Pack NuGet (Infra.Cosmos only with tag version)
+      run: |
+        mkdir -p artifacts
+        VERSION=${GITHUB_REF#refs/tags/v}
+        dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos \
+          --configuration Release --output ./artifacts \
+          -p:PackageVersion=$VERSION
 
     - name: 📂 Upload NuGet package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: jwt-refresh-token-cosmos-nuget
-        path: ./artifacts/*.nupkg
+        path: artifacts/*.nupkg
+
+    - name: 🚀 Publish package to NuGet.org
+      run: |
+        dotnet nuget push artifacts/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json

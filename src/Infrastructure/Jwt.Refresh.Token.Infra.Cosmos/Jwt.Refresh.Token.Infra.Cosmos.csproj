@@ -12,7 +12,6 @@
         <Copyright>bs3.dev</Copyright>
         <RepositoryUrl>https://github.com/bs3dev/jwt-refresh-token</RepositoryUrl>
         <Version>4.0.0-preview</Version>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageProjectUrl>https://github.com/bs3dev/jwt-refresh-token</PackageProjectUrl>
     </PropertyGroup>
 
