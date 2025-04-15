@@ -1,0 +1,39 @@
+name: Build and Pack NuGet
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-pack:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧱 Checkout repository
+      uses: actions/checkout@v3
+
+    - name: 🧰 Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.x'
+
+    - name: 📦 Restore dependencies
+      run: dotnet restore
+
+    - name: 🔧 Build all projects under src/
+      run: dotnet build ./src --configuration Release --no-restore
+
+    - name: ✅ Run unit tests only
+      run: dotnet test ./src/Tests/Jwt.Refresh.Token.Tests.Unit --no-build --configuration Release
+
+    - name: 📦 Pack NuGet (Infra.Cosmos only)
+      run: dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos \
+             --no-build --configuration Release --output ./artifacts
+
+    - name: 📂 Upload NuGet package
+      uses: actions/upload-artifact@v3
+      with:
+        name: jwt-refresh-token-cosmos-nuget
+        path: ./artifacts/*.nupkg
