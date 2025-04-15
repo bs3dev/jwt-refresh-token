@@ -33,7 +33,7 @@ jobs:
              --no-build --configuration Release --output ./artifacts
 
     - name: 📂 Upload NuGet package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.3
       with:
         name: jwt-refresh-token-cosmos-nuget
         path: ./artifacts/*.nupkg
