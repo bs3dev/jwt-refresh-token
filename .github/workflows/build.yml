@@ -1,0 +1,52 @@
+name: Build, Test, Pack and Conditional Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test-pack:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧱 Checkout repository
+      uses: actions/checkout@v3
+
+    - name: 🧰 Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.x'
+
+    - name: 📦 Restore dependencies
+      run: dotnet restore ./src/Jwt.Refresh.Token.sln
+
+    - name: 🔧 Build all projects (including dependencies)
+      run: dotnet build ./src --configuration Release --no-restore
+
+    - name: ✅ Run unit tests
+      run: dotnet test ./src/Tests/Jwt.Refresh.Token.Tests.Unit --no-build --configuration Release
+
+    - name: 📦 Pack NuGet (Infra.Cosmos only)
+      run: |
+        mkdir -p artifacts
+        VERSION=${GITHUB_REF#refs/tags/v}
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then VERSION="0.0.0-preview"; fi
+        dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos \
+          --configuration Release --output ./artifacts \
+          -p:PackageVersion=$VERSION
+
+    - name: 📂 Upload NuGet package
+      uses: actions/upload-artifact@v4
+      with:
+        name: jwt-refresh-token-cosmos-nuget
+        path: artifacts/*.nupkg
+
+    - name: 🚀 Publish package to NuGet.org
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      run: |
+        dotnet nuget push artifacts/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json

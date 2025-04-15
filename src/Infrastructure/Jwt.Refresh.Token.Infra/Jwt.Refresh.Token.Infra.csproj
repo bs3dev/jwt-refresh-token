@@ -1,46 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-    <AssemblyName>Jwt.Refresh.Token.Infra</AssemblyName>
-    <PackageId>Jwt.Refresh.Token.Infra</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>Bruno Brandes</Authors>
-    <Product>Jwt Refresh Token Cosmos</Product>
-    <Description>
-      Jwt refresh token - Infrastructure layer
-    </Description>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageProjectUrl>https://github.com/brunobrandes/jwt-refresh-token</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/brunobrandes/jwt-refresh-token</RepositoryUrl>
-    <PackageTags>dotnet azurecosmosdb jwt refreshtoken security</PackageTags>
-    <PackageIcon />
-    <PackageIconUrl />
-  </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.4" />
+    </ItemGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <LangVersion>latestmajor</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <LangVersion>latestmajor</LangVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Jwt\" />
-    <None Remove="DependencyInjections\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.3.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
-    <ProjectReference Include="..\..\Application\Jwt.Refresh.Token.Application\Jwt.Refresh.Token.Application.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DependencyInjections\" />
-  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\Application\Jwt.Refresh.Token.Application\Jwt.Refresh.Token.Application.csproj" />
+      <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
+    </ItemGroup>
+
 </Project>

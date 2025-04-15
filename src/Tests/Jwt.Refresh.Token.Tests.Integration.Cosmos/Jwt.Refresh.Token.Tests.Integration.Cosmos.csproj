@@ -10,8 +10,10 @@
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.2"/>
         <PackageReference Include="FluentAssertions" Version="8.2.0" />
+        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.48.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
-        <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="xunit" Version="2.9.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"/>
     </ItemGroup>
@@ -22,7 +24,13 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Application\Jwt.Refresh.Token.Application\Jwt.Refresh.Token.Application.csproj" />
-      <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
+      <ProjectReference Include="..\..\Infrastructure\Jwt.Refresh.Token.Infra.Cosmos\Jwt.Refresh.Token.Infra.Cosmos.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

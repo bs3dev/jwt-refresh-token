@@ -6,12 +6,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Compile Remove="Class1.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
-    </ItemGroup>
-
 </Project>
