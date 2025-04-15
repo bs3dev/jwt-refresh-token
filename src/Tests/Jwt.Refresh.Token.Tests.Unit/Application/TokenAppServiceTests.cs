@@ -1,95 +1,197 @@
-﻿using System;
-using System.Threading;
 using FluentAssertions;
 using Jwt.Refresh.Token.Application;
 using Jwt.Refresh.Token.Application.Interfaces;
 using Jwt.Refresh.Token.Domain.Constants;
+using Jwt.Refresh.Token.Domain.Entities;
 using Jwt.Refresh.Token.Domain.Entities.Repositories;
+using Jwt.Refresh.Token.Domain.Extensions;
 using Jwt.Refresh.Token.Domain.Services.Interfaces;
 using Moq;
-using Xunit;
 
-namespace Jwt.Refresh.Token.Tests.Unit.Application
+namespace Jwt.Refresh.Token.Tests.Unit.Application;
+
+public class TokenAppServiceTests
 {
-    public class TokenAppServiceTests
+    private readonly Mock<ITokenRepository> _tokenRepositoryMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
+    private readonly Mock<IJwtAccessTokenService> _jwtAccessTokenServiceMock;
+
+    private readonly ITokenAppService _tokenAppService;
+
+    private readonly string _userId;
+    private readonly string _password;
+    private readonly string _ipAddress;
+
+    public TokenAppServiceTests()
     {
-        private readonly Mock<ITokenRepository> _tokenRepositoryMock;
-        private readonly Mock<IUserRepository> _userRepositoryMock;
-        private readonly Mock<IJwtTokenService> _jwtTokenServiceMock;
+        _tokenRepositoryMock = new Mock<ITokenRepository> { };
+        _userRepositoryMock = new Mock<IUserRepository> { };
+        _jwtAccessTokenServiceMock = new Mock<IJwtAccessTokenService> { };
 
-        private readonly ITokenAppService _tokenAppService;
+        _tokenAppService = new TokenAppService(_tokenRepositoryMock.Object,
+            _userRepositoryMock.Object, _jwtAccessTokenServiceMock.Object);
 
-        private readonly string _userId;
-        private readonly string _password;
-        private readonly string _ipAddress;
+        _userId = "test@bs3.dev";
+        _password = "password_test";
+        _ipAddress = "127.0.0.1";
+    }
 
-        public TokenAppServiceTests()
-        {
-            
-            _tokenRepositoryMock = new Mock<ITokenRepository> { };
-            _userRepositoryMock = new Mock<IUserRepository> { };
-            _jwtTokenServiceMock = new Mock<IJwtTokenService> { };
+    [Fact]
+    public async Task Create_Token_ReturnsAuhtorized()
+    {
+        var cancellationToken = CancellationToken.None;
 
-            _tokenAppService = new TokenAppService(_tokenRepositoryMock.Object,
-                _userRepositoryMock.Object, _jwtTokenServiceMock.Object);
+        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, cancellationToken))
+            .ReturnsAsync(_userId);
 
-            _userId = "test@bs3.dev";
-            _password = "password_test";
-            _ipAddress = "127.0.0.1";
-        }
+        _jwtAccessTokenServiceMock.Setup(x => x.GetAsync(_userId, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new_access_token");
 
-        [Fact]
-        public async Task Create_Token_ReturnsAuhtorized()
-        {
-            var cancellationToken = default(CancellationToken);
+        _tokenRepositoryMock.Setup(x => x.CreateAsync(It.IsAny<TokenEntity>(), cancellationToken));
 
-            _userRepositoryMock.Setup(x => x.GetUserIdByIdAndPasswordAsync(_userId, _password, cancellationToken))
-                .ReturnsAsync(_userId);
+        var token = await _tokenAppService.CreateAsync(_userId, _password, It.IsAny<int>(), _ipAddress,
+            It.IsAny<CancellationToken>());
 
-            _jwtTokenServiceMock.Setup(x => x.GetAccessTokenAsync(_userId, MillisecondsConversion.Minute,
-                cancellationToken))
-                .ReturnsAsync("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyX3Rlc3RAZ21haWwuY29tIn0.R7TGeX7_PJxXfKuojZmgitxlMCdxNQ2MoEuKww6zr4s");
+        token.Status
+            .Should()
+            .Be(TokenStatusConst.Authorized);
+    }
 
-            _tokenRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Domain.Entities.Token>(), cancellationToken));
+    [Fact]
+    public async Task Create_Token_UserIdOrPasswordInvalid_ReturnsUnauhtorized()
+    {
+        var token = await _tokenAppService.CreateAsync(string.Empty, string.Empty, 1.MinutesToMilliseconds(),
+            _ipAddress,
+            CancellationToken.None);
 
-            var token = await _tokenAppService.CreateAsync(_userId, _password, MillisecondsConversion.Minute, _ipAddress,
-                cancellationToken);
+        token.Status.Should().Be(TokenStatusConst.Unauthorized);
+    }
 
-            token.Status.Should().Be(Domain.Enums.TokenStatus.Authorized);
-        }
-
-        [Fact]
-        public async Task Create_Token_UserIdOrPasswordInvalid_ReturnsUnauhtorized()
-        {
-            var token = await _tokenAppService.CreateAsync(string.Empty, string.Empty, MillisecondsConversion.Minute, _ipAddress,
-                default(CancellationToken));
-
-            token.Status.Should().Be(Domain.Enums.TokenStatus.Unauthorized);
-        }
-
-        [Fact]
-        public async Task Create_Token_UserIdNotFound_ReturnsUnauhtorized()
-        {
-            _userRepositoryMock.Setup(x => x.GetUserIdByIdAndPasswordAsync(_userId, _password, default(CancellationToken)))
+    [Fact]
+    public async Task Create_Token_UserIdNotFound_ReturnsUnauhtorized()
+    {
+        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
             .ReturnsAsync(string.Empty);
 
-            var token = await _tokenAppService.CreateAsync(_userId, _password, MillisecondsConversion.Minute, _ipAddress,
-               default(CancellationToken));
+        var token = await _tokenAppService.CreateAsync(_userId, _password, 1.MinutesToMilliseconds(), _ipAddress,
+            CancellationToken.None);
 
-            token.Status.Should().Be(Domain.Enums.TokenStatus.Unauthorized);
-        }
+        token.Status.Should().Be(TokenStatusConst.Unauthorized);
+    }
 
-        [Fact]
-        public async Task Create_Token_UnexpectedError_ReturnsError()
-        {
-            _userRepositoryMock.Setup(x => x.GetUserIdByIdAndPasswordAsync(_userId, _password, default(CancellationToken)))
+    [Fact]
+    public async Task Create_Token_UnexpectedError_ReturnsError()
+    {
+        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
             .ThrowsAsync(new Exception("Unexpected error"));
 
-            var token = await _tokenAppService.CreateAsync(_userId, _password, MillisecondsConversion.Minute, _ipAddress,
-               default(CancellationToken));
+        var token = await _tokenAppService.CreateAsync(_userId, _password, 1.MinutesToMilliseconds(), _ipAddress,
+            CancellationToken.None);
 
-            token.Status.Should().Be(Domain.Enums.TokenStatus.Error);
-        }
+        token.Status.Should().Be(TokenStatusConst.Error);
+    }
+
+    [Fact]
+    public async Task Refresh_Token_InvalidInput_ReturnsUnauthorized()
+    {
+        var result =
+            await _tokenAppService.RefreshAsync(string.Empty, string.Empty, 1000, _ipAddress, CancellationToken.None);
+
+        result.Status.Should().Be(TokenStatusConst.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Refresh_Token_NotFound_ReturnsUnauthorized()
+    {
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TokenEntity)null!);
+
+        var result = await _tokenAppService.RefreshAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, 1000,
+            _ipAddress, CancellationToken.None);
+
+        result.Status.Should().Be(TokenStatusConst.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Refresh_Token_Success_ReturnsAuthorized()
+    {
+        var entity = new TokenEntity { Id = "5d4369a3-29b5-49fb-aaf9-c00d07284ec7", UserId = _userId };
+
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        _jwtAccessTokenServiceMock
+            .Setup(x => x.GetAsync(_userId, 1000, It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new_access_token");
+
+        _tokenRepositoryMock
+            .Setup(x => x.CreateAsync(It.IsAny<TokenEntity>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        var result = await _tokenAppService.RefreshAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, 1000,
+            _ipAddress, CancellationToken.None);
+
+        result.Status.Should().Be(TokenStatusConst.Authorized);
+        result.AccessToken.Should().Be("new_access_token");
+    }
+
+    [Fact]
+    public async Task Refresh_Token_ThrowsException_ReturnsError()
+    {
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Some error"));
+
+        var result = await _tokenAppService.RefreshAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, 1000,
+            _ipAddress, CancellationToken.None);
+
+        result.Status.Should().Be(TokenStatusConst.Error);
+    }
+
+    [Fact]
+    public async Task TryRevoke_Token_NotFound_ReturnsZero()
+    {
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TokenEntity)null!);
+
+        var result = await _tokenAppService.TryRevokeAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, _ipAddress,
+            CancellationToken.None);
+
+        result.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task TryRevoke_Token_Success_ReturnsOne()
+    {
+        var entity = new TokenEntity { Id = "5d4369a3-29b5-49fb-aaf9-c00d07284ec7", UserId = _userId };
+
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        _tokenRepositoryMock
+            .Setup(x => x.UpdateAsync(It.IsAny<TokenEntity>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var result = await _tokenAppService.TryRevokeAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, _ipAddress,
+            CancellationToken.None);
+
+        result.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task TryRevoke_Token_ThrowsException_ReturnsZero()
+    {
+        _tokenRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Unexpected"));
+
+        var result = await _tokenAppService.TryRevokeAsync("5d4369a3-29b5-49fb-aaf9-c00d07284ec7", _userId, _ipAddress,
+            CancellationToken.None);
+
+        result.Should().Be(0);
     }
 }
-

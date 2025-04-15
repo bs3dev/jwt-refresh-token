@@ -20,11 +20,14 @@ This project is based in Onion Architecture created by [Jeffrey Palermo](https:/
 #### Flow
 ![Miro](https://i.imgur.com/f8y4CGR.jpg)
 
-#### Supported Databases
-Goal of this project is support at last 3 main Azure Databases:
-- [x] [Azure Cosmos DB for NoSQL](https://learn.microsoft.com/en-gb/azure/cosmos-db/nosql/quickstart-dotnet?tabs=azure-portal%2Cwindows%2Cpasswordless%2Csign-in-azure-cli) *preview*
-- [ ] [Azure Cosmos DB for PostgreSQL](https://learn.microsoft.com/en-gb/azure/cosmos-db/postgresql/introduction) *not started*
-- [ ] [Azure Sql Database](https://azure.microsoft.com/en-us/products/azure-sql/database/?&ef_id=CjwKCAjwiOCgBhAgEiwAjv5whFE2R0wjiJxJRIQlHjt35KZpzb_JowGvDnAvkdSRvg5VbBaeMBlmZhoCkP0QAvD_BwE:G:s&OCID=AIDcmmzmnb0182_SEM_CjwKCAjwiOCgBhAgEiwAjv5whFE2R0wjiJxJRIQlHjt35KZpzb_JowGvDnAvkdSRvg5VbBaeMBlmZhoCkP0QAvD_BwE:G:s&gclid=CjwKCAjwiOCgBhAgEiwAjv5whFE2R0wjiJxJRIQlHjt35KZpzb_JowGvDnAvkdSRvg5VbBaeMBlmZhoCkP0QAvD_BwE) *not started*
+#### ✅ Supported Databases
+
+The goal of this project is to support the most widely used Azure-compatible databases:
+
+- [x] [Azure Cosmos DB for NoSQL](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-dotnet) *(preview)*
+- [ ] [Azure Cosmos DB for PostgreSQL](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/introduction) *(planned)*
+- [ ] [Azure SQL Database](https://learn.microsoft.com/en-us/azure/azure-sql/database/sql-database-paas-overview) *(planned)*
+- [ ] [Azure Cosmos DB for MongoDB](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/introduction) *(planned)*
 
 #### Cosmos DB
 To install Jwt.Refresh.Token.Cosmos *(include prereleases)*, run the following command in the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/)
@@ -41,20 +44,24 @@ Implement IUserRepository for get user by id and password. UserId
 
 2. ✯ Configure settings app:
 ```json
-"JwtRefreshTokenDescriptor": {
-    "AlgorithmKey": "YOUR_ALGORITHM_KEY",
-    "Issuer": "https://your-resource.com",
-    "Audience": "https://your-resource.com"
-  },
-  "JwtRefreshTokenExpires": {
-    "CreateMilliseconds": 60000,
-    "RefreshMilliseconds": 900000
-  },
-  "JwtRefreshTokenCosmos": {
-    "ConnectionString": "YOUR_COSMOS_CONNECTIONSTRING",
-    "DatabaseId": "YOUR_DATABASEID",
-    "TokenContainerId": "YOUR_TOKEN_CONTAINERID"
+{
+  "JwtRefreshToken": {
+    "Descriptor": {
+      "Issuer": "https://your-resource.com",
+      "Audience": "https://your-audience.com",
+      "AlgorithmKey": "YOUR_ALGORITHM_KEYr"
+    },
+    "Expires": {
+      "CreateExpiresInMs": 60000,
+      "RefreshExpiresInMs": 1209600000
+    },
+    "Cosmos": {
+      "ConnectionString": "YOUR_COSMOS_CONNECTIONSTRING",
+      "DatabaseName": "YOUR_DATABASEID",
+      "TokenContainerId": "YOUR_TOKEN_CONTAINERID"
+    }
   }
+}
 ```
 
 3. ✯ Configure startup app:
@@ -66,14 +73,8 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 and configuring it in your application’s startup class file: 
 
 ```csharp
-// [required] Add jwt domain services
-builder.Services.AddJwtRefreshTokenServices(builder.Configuration);
-
 // [required (cosmos)]  Add jwt cosmos repositories
 builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration);
-
-// [optional]  Bind util token expires config
-builder.Services.BindJwtRefreshTokenExpiresOptions(builder.Configuration);
 
 // [required] AspNetCore Authentication config
 builder.Services.AddAuthentication(x =>

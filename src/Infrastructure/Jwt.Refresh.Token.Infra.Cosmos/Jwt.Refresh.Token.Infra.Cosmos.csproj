@@ -1,48 +1,35 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-    
-    <AssemblyName>Jwt.Refresh.Token.Infra.Cosmos</AssemblyName>
-    <PackageId>Jwt.Refresh.Token.Cosmos</PackageId>
-    <Version>2.0.4-preview</Version>
-    <Authors>Bruno Brandes</Authors>
-    <Product>Jwt Refresh Token Cosmos</Product>
-    <Description>
-      Jwt refresh token with Azure Cosmos DB
-    </Description>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageProjectUrl>https://github.com/brunobrandes/jwt-refresh-token</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/brunobrandes/jwt-refresh-token</RepositoryUrl>
-    <PackageTags>dotnet azurecosmosdb jwt refreshtoken security</PackageTags>
-    <PackageIcon />
-    <PackageIconUrl />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>Jwt.Refresh.Token.Cosmos</PackageId>
+        <Authors>Bs3</Authors>
+        <PackageTags>jwt refresh-token authentication cosmosdb azure dotnet</PackageTags>
+        <Title>JWT Refresh Token with Cosmos DB</Title>
+        <Description>Library for managing JWT access tokens and refresh tokens using Azure Cosmos DB</Description>
+        <Copyright>bs3.dev</Copyright>
+        <RepositoryUrl>https://github.com/bs3dev/jwt-refresh-token</RepositoryUrl>
+        <Version>4.0.0-preview</Version>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageProjectUrl>https://github.com/bs3dev/jwt-refresh-token</PackageProjectUrl>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Entities\" />
-    <None Remove="Entities\Repositories\" />
-    <None Remove="Configurations\" />
-    <None Remove="DependencyInjections\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Entities\" />
-    <Folder Include="Entities\Repositories\" />
-    <Folder Include="Configurations\" />
-    <Folder Include="DependencyInjections\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
-    <ProjectReference Include="..\..\Application\Jwt.Refresh.Token.Application\Jwt.Refresh.Token.Application.csproj" />
-    <ProjectReference Include="..\Jwt.Refresh.Token.Infra\Jwt.Refresh.Token.Infra.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Entities\Repositories\UserRepository.cs" />
-  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
+      <ProjectReference Include="..\Jwt.Refresh.Token.Infra\Jwt.Refresh.Token.Infra.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.48.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.4" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+    </PropertyGroup>
+
+
 </Project>

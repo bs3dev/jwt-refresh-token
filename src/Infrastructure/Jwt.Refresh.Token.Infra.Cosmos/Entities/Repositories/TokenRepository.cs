@@ -1,58 +1,82 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net;
+using Jwt.Refresh.Token.Domain.Entities;
 using Jwt.Refresh.Token.Domain.Entities.Repositories;
 using Microsoft.Azure.Cosmos;
-using System.Net;
 
-namespace Jwt.Refresh.Token.Infra.Cosmos.Entities.Repositories
-{
-    public class TokenRepository : BaseRepository<Domain.Entities.Token>, ITokenRepository
+namespace Jwt.Refresh.Token.Infra.Cosmos.Entities.Repositories;
+
+/// <summary>
+    /// Repository responsible for persisting and retrieving token entities using Azure Cosmos DB.
+    /// </summary>
+    public class TokenRepository : ITokenRepository
     {
-        private readonly CosmosClient _cosmosClient;
         private readonly Container _container;
 
-        public TokenRepository(CosmosClient cosmosClient, string databaseId, string containerId) :
-            base(cosmosClient, databaseId, containerId)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TokenRepository"/> class.
+        /// </summary>
+        /// <param name="cosmosClient">Cosmos DB client instance.</param>
+        /// <param name="databaseName">The name of the Cosmos DB database.</param>
+        /// <param name="containerId">The ID of the container where tokens are stored.</param>
+        public TokenRepository(CosmosClient cosmosClient, string databaseName, string containerId)
         {
-            _cosmosClient = cosmosClient;
-            _container = _cosmosClient.GetContainer(databaseId, containerId);
+            _container = cosmosClient.GetContainer(databaseName, containerId);
         }
 
-        public async Task<Domain.Entities.Token> AddAsync(Domain.Entities.Token token, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Creates a new token entity in Cosmos DB.
+        /// </summary>
+        /// <param name="tokenEntity">The token entity to create.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The created token entity.</returns>
+        public async Task<TokenEntity> CreateAsync(TokenEntity tokenEntity, CancellationToken cancellationToken)
         {
-                _ = await _container.CreateItemAsync(token, new Microsoft.Azure.Cosmos.PartitionKey(token.UserId),
-                    cancellationToken: cancellationToken);
-
-                return token;            
+            var response = await _container.CreateItemAsync(tokenEntity, new PartitionKey(tokenEntity.UserId), cancellationToken: cancellationToken);
+            return response.Resource;
         }
 
-        public async Task<Domain.Entities.Token> GetByIdAndUserIdAsync(string id, string userId, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Retrieves a token entity by ID and user ID (used as partition key).
+        /// </summary>
+        /// <param name="tokenId">The token ID.</param>
+        /// <param name="userId">The user ID (partition key).</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The token entity if found; otherwise, null.</returns>
+        public async Task<TokenEntity> GetAsync(string tokenId, string userId, CancellationToken cancellationToken)
         {
             try
             {
-                return await GetAsync(id, userId, cancellationToken: cancellationToken);
+                var response = await _container.ReadItemAsync<TokenEntity>(tokenId, new PartitionKey(userId), cancellationToken: cancellationToken);
+                return response.Resource;
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 return default;
-            }            
+            }
         }
 
-        public async Task<bool> UpdateAsync(Domain.Entities.Token token, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Updates an existing token entity in Cosmos DB.
+        /// </summary>
+        /// <param name="tokenEntity">The token entity to update.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The number of documents affected (0 or 1).</returns>
+        public async Task<int> UpdateAsync(TokenEntity tokenEntity, CancellationToken cancellationToken)
         {
             try
             {
-                if (token.Revoked.HasValue && token.Revoked != DateTimeOffset.MinValue)
-                    token.Ttl = 1;
+                var response = await _container.ReplaceItemAsync(
+                    item: tokenEntity,
+                    id: tokenEntity.Id,
+                    partitionKey: new PartitionKey(tokenEntity.UserId),
+                    cancellationToken: cancellationToken
+                );
 
-                return await UpdateAsync(token, token.Id, token.UserId, cancellationToken);
+                return response.StatusCode == HttpStatusCode.OK ? 1 : 0;
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                return false;
-            }            
+                return 0;
+            }
         }
     }
-}
-
