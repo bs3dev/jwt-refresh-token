@@ -39,7 +39,7 @@ jobs:
           -p:PackageVersion=$VERSION
 
     - name: 📂 Upload NuGet package
-      uses: actions/upload-artifact@6052e8b5c39cf8d1fc3acfd55619445e8c7c36ab
+      uses: actions/upload-artifact@v4
       with:
         name: jwt-refresh-token-cosmos-nuget
         path: artifacts/*.nupkg
