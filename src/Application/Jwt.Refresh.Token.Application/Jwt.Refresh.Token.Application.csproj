@@ -9,11 +9,10 @@
         <Version />
         <Title>Application | JWT Refresh Token with Cosmos DB</Title>
         <Authors>Bs3</Authors>
+        <Copyright>bs3.dev</Copyright>
+        <PackageProjectUrl>https://github.com/bs3dev/jwt-refresh-token</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/bs3dev/jwt-refresh-token</RepositoryUrl>
     </PropertyGroup>
-
-    <ItemGroup>
-      <Compile Remove="Class1.cs" />
-    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\Domain\Jwt.Refresh.Token.Domain\Jwt.Refresh.Token.Domain.csproj" />
