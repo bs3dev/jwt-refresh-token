@@ -4,7 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version />
+        <Version>$(PackageVersion)</Version>
         <Description>Infra | Library for managing JWT access tokens and refresh tokens using Azure Cosmos DB</Description>
         <Copyright>bs3.dev</Copyright>
         <Title>Infra | JWT Refresh Token with Cosmos DB</Title>

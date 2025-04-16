@@ -1,4 +1,4 @@
-name: Build, Test, Pack and Conditional Publish
+name: Build, Test, Pack All and Conditional Publish
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     - name: 🧰 Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.x'
+        dotnet-version: '8.x'
 
     - name: 📦 Restore dependencies
       run: dotnet restore ./src/Jwt.Refresh.Token.sln
@@ -30,7 +30,7 @@ jobs:
     - name: ✅ Run unit tests
       run: dotnet test ./src/Tests/Jwt.Refresh.Token.Tests.Unit --no-build --configuration Release
 
-    - name: 📦 Pack NuGet (Infra.Cosmos + referenced projects)
+    - name: 📦 Pack NuGet packages (Application, Domain, Infra.Cosmos)
       run: |
         mkdir -p artifacts
         if [[ "${{ github.ref_type }}" == "tag" ]]; then
@@ -39,15 +39,18 @@ jobs:
           VERSION="0.0.0-preview"
         fi
 
-        dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos/Jwt.Refresh.Token.Infra.Cosmos.csproj           --configuration Release --output ./artifacts           -p:IncludeReferencedProjects=true           -p:PackageVersion=$VERSION
+        for proj in           ./src/Application/Jwt.Refresh.Token.Application/Jwt.Refresh.Token.Application.csproj           ./src/Domain/Jwt.Refresh.Token.Domain/Jwt.Refresh.Token.Domain.csproj           ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos/Jwt.Refresh.Token.Infra.Cosmos.csproj
+        do
+          dotnet pack "$proj"             --configuration Release --output ./artifacts             -p:PackageVersion=$VERSION
+        done
 
-    - name: 📂 Upload NuGet package
+    - name: 📂 Upload NuGet packages
       uses: actions/upload-artifact@v4
       with:
-        name: jwt-refresh-token-cosmos-nuget
+        name: jwt-refresh-token-nugets
         path: artifacts/*.nupkg
 
-    - name: 🚀 Publish package to NuGet.org
+    - name: 🚀 Publish packages to NuGet.org
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
         dotnet nuget push artifacts/*.nupkg           --api-key ${{ secrets.NUGET_API_KEY }}           --source https://api.nuget.org/v3/index.json
