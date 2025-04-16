@@ -54,4 +54,4 @@ jobs:
     - name: 🚀 Publish packages to NuGet.org
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
-        dotnet nuget push artifacts/*.nupkg           --api-key ${{ secrets.NUGET_API_KEY }}           --source https://api.nuget.org/v3/index.json
+        dotnet nuget push artifacts/*.nupkg           --api-key ${{ secrets.NUGET_API_KEY }}           --source https://api.nuget.org/v3/index.json           --skip-duplicate
