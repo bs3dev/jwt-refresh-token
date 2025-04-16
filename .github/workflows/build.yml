@@ -19,7 +19,7 @@ jobs:
     - name: 🧰 Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.x'
+        dotnet-version: '8.x'
 
     - name: 📦 Restore dependencies
       run: dotnet restore ./src/Jwt.Refresh.Token.sln
@@ -39,7 +39,7 @@ jobs:
           VERSION="0.0.0-preview"
         fi
 
-        dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos           --configuration Release --output ./artifacts           --include-referenced-projects           -p:PackageVersion=$VERSION
+        dotnet pack ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos/Jwt.Refresh.Token.Infra.Cosmos.csproj           --configuration Release --output ./artifacts           --include-referenced-projects           -p:PackageVersion=$VERSION
 
     - name: 📂 Upload NuGet package
       uses: actions/upload-artifact@v4
