@@ -22,7 +22,7 @@ jobs:
         dotnet-version: '9.x'
 
     - name: 📦 Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./src/Jwt.Refresh.Token.sln
 
     - name: 🔧 Build all projects (including dependencies)
       run: dotnet build ./src --configuration Release --no-restore
