@@ -11,7 +11,7 @@
         <Description>Library for managing JWT access tokens and refresh tokens using Azure Cosmos DB</Description>
         <Copyright>bs3.dev</Copyright>
         <RepositoryUrl>https://github.com/bs3dev/jwt-refresh-token</RepositoryUrl>
-        <Version>4.0.0-preview</Version>
+        <Version></Version>
         <PackageProjectUrl>https://github.com/bs3dev/jwt-refresh-token</PackageProjectUrl>
     </PropertyGroup>
 

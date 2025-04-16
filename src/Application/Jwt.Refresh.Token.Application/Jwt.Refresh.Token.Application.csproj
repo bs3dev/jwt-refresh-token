@@ -4,6 +4,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Description>Application | Library for managing JWT access tokens and refresh tokens using Azure Cosmos DB</Description>
+        <Copyright>bs3.dev</Copyright>
+        <Version />
+        <Title>Application | JWT Refresh Token with Cosmos DB</Title>
+        <Authors>Bs3</Authors>
     </PropertyGroup>
 
     <ItemGroup>
