@@ -30,7 +30,7 @@ jobs:
     - name: ✅ Run unit tests
       run: dotnet test ./src/Tests/Jwt.Refresh.Token.Tests.Unit --no-build --configuration Release
 
-    - name: 📦 Pack NuGet packages (Application, Domain, Infra.Cosmos)
+    - name: 📦 Pack all NuGet packages (excluding test projects)
       run: |
         mkdir -p artifacts
         if [[ "${{ github.ref_type }}" == "tag" ]]; then
@@ -39,8 +39,9 @@ jobs:
           VERSION="0.0.0-preview"
         fi
 
-        for proj in           ./src/Application/Jwt.Refresh.Token.Application/Jwt.Refresh.Token.Application.csproj           ./src/Domain/Jwt.Refresh.Token.Domain/Jwt.Refresh.Token.Domain.csproj           ./src/Infrastructure/Jwt.Refresh.Token.Infra.Cosmos/Jwt.Refresh.Token.Infra.Cosmos.csproj
+        for proj in $(find ./src -name '*.csproj' ! -path './src/Tests/*')
         do
+          echo "Packing $proj"
           dotnet pack "$proj"             --configuration Release --output ./artifacts             -p:PackageVersion=$VERSION
         done
 
