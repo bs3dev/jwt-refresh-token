@@ -9,7 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Jwt.Refresh.Token.Cosmos" Version="6.0.5-preview" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
+
+    <PropertyGroup>
+      <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+    </PropertyGroup>
 
 </Project>

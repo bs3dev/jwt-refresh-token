@@ -1,0 +1,155 @@
+{
+	"info": {
+		"_postman_id": "2063fb7e-d86f-410f-a7d4-52429a2e32e1",
+		"name": "Jwt.Refresh.Token",
+		"description": "Flow to create, refresh, and revoke JWT tokens with antiforgery protection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11206037"
+	},
+	"item": [
+		{
+			"name": "Create Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const xsrf = pm.response.headers.get('X-XSRF-TOKEN');",
+							"pm.environment.set('xsrf', xsrf);",
+							"",
+							"// Parse the body as JSON",
+							"const json = pm.response.json();",
+							"",
+							"// Handle both camelCase and PascalCase",
+							"const jwt = json.accessToken || json.AccessToken;",
+							"const tokenId = json.id || json.Id;",
+							"",
+							"if (jwt) pm.environment.set('jwt', jwt);",
+							"if (tokenId) pm.environment.set('tokenId', tokenId);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "userId",
+							"value": "test@bs3.dev",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "test-1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5001/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Refresh Token",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					},
+					{
+						"key": "X-XSRF-TOKEN",
+						"value": "{{xsrf}}"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}",
+							"type": "text"
+						},
+						{
+							"key": "userId",
+							"value": "test@bs3.dev",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5001/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Revoke Token",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					},
+					{
+						"key": "X-XSRF-TOKEN",
+						"value": "{{xsrf}}"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}",
+							"type": "text"
+						},
+						{
+							"key": "userId",
+							"value": "test@bs3.dev",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5001/revoke",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"revoke"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

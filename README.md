@@ -31,7 +31,8 @@ The goal of this project is to support the most widely used Azure-compatible dat
 
 #### Cosmos DB
 To install Jwt.Refresh.Token.Cosmos *(include prereleases)*, run the following command in the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/)
-```
+
+```bash
 dotnet add package Jwt.Refresh.Token.Cosmos --prerelease
 ```
 ##### Usage
@@ -47,13 +48,13 @@ Implement IUserRepository for get user by id and password. UserId
 {
   "JwtRefreshToken": {
     "Descriptor": {
-      "Issuer": "https://your-resource.com",
-      "Audience": "https://your-audience.com",
-      "AlgorithmKey": "YOUR_ALGORITHM_KEYr"
+      "Issuer": "YOUR_ISSUER",
+      "Audience": "YOUR_AUDIENCE",
+      "AlgorithmKey": "YOUR_ALGORITHM_KEY"
     },
     "Expires": {
-      "CreateExpiresInMs": 60000,
-      "RefreshExpiresInMs": 1209600000
+     "CreateExpiresInMs": 300000, // Access Token lifespan: 5 minutes
+  "RefreshExpiresInMs": 604800000 // Refresh Token lifespan: 7 days
     },
     "Cosmos": {
       "ConnectionString": "YOUR_COSMOS_CONNECTIONSTRING",
@@ -64,118 +65,121 @@ Implement IUserRepository for get user by id and password. UserId
 }
 ```
 
-3. ✯ Configure startup app:
+3. ✯ Configure startup and endpoints app:
 
-Install ASP.NET Core authentication middleware
+⚠️ **Note:** Although this library uses `System.Text.Json` internally, the `Microsoft.Azure.Cosmos` SDK still requires `Newtonsoft.Json` as a runtime dependency. Make sure to install it in your host application to avoid runtime errors:
+
 ```bash
-dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package Newtonsoft.Json 
 ```
-and configuring it in your application’s startup class file: 
+
+Now, configure it in your application's Program.cs (startup file):
 
 ```csharp
-// [required (cosmos)]  Add jwt cosmos repositories
-builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration);
 
-// [required] AspNetCore Authentication config
-builder.Services.AddAuthentication(x =>
+builder.Services.AddAntiforgery(options =>
 {
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    // choose your bearer config 
-    .AddJwtBearer(x =>
-    {
-        x.RequireHttpsMetadata = true;
-        x.SaveToken = true;
-        x.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
-              .GetBytes(builder.Configuration.GetValue<string>("JwtRefreshTokenDescriptor:AlgorithmKey"))),
-            ValidateIssuer = true,
-            ValidateAudience = true
-        };
-    });
+    // Allow client-side tools (like Swagger or Postman) to access the antiforgery cookie.
+    // This is necessary to manually include the cookie in requests for CSRF validation.
+    options.Cookie.HttpOnly = false;
 
-// [required] AspNetCore Authentication config
-builder.Services
-    .AddAuthorization(auth =>
+    // Set the header name that the antiforgery system expects.
+    // This should match what the client sends (e.g., X-XSRF-TOKEN).
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
+/builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
+});
+
+// Register refresh token services
+builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration, new CosmosClientOptions
+{
+    ConnectionMode = ConnectionMode.Gateway,
+    AllowBulkExecution = true,
+    SerializerOptions = new CosmosSerializationOptions
     {
-        auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
-            .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-            .RequireAuthenticatedUser().Build());
+        Indented = true,
+        PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase,
+        IgnoreNullValues = true
+    }
+});
+
+// Registers a custom implementation of IUserRepository used to validate credentials and retrieve the userId,
+// which is later assigned to the ClaimTypes.NameIdentifier in the generated JWT.
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// 🔐 Secure JWT Authentication Configuration
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+{
+    options.RequireHttpsMetadata = true;
+    options.SaveToken = true;
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.ASCII.GetBytes(builder.Configuration["JwtRefreshToken:Descriptor:AlgorithmKey"]
+                                    ?? throw new InvalidOperationException("JWT key not configured."))
+        ),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JwtRefreshToken:Descriptor:Issuer"],
+        
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JwtRefreshToken:Descriptor:Audience"],
+
+        ValidateLifetime = true,
+        RequireExpirationTime = true,
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Bearer", policy =>
+    {
+        policy.AddAuthenticationSchemes("Bearer");
+        policy.RequireAuthenticatedUser();
     });
+});
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Maps the default refresh token endpoints (POST /token, PATCH /token, PATCH /revoke).
+// These endpoints are fully integrated with antiforgery and JWT security mechanisms.
+// If needed, you can implement your own custom routes by invoking ITokenAppService directly.
+app.MapTokenEndpoints();
+
+app.Run();
+
 ```
 
-4. ✯ Create token controller
+See integration test [here](https://github.com/brunobrandes/jwt-refresh-token/tree/main/src/Tests/Jwt.Refresh.Token.Tests.Integration.Cosmos)
 
-Creating token controler to management token:
+---
 
-```csharp
-[ApiController]
-[Route("[controller]")]
-public class TokenController : ControllerBase
-{
-    private readonly ILogger<TokenController> _logger;
-    private readonly ITokenAppService _tokenAppService;
-    private readonly IOptionsSnapshot<JwtRefreshTokenExpiresOptions> _jwtRefreshTokenExpiresOptions;
+### 🧪 Sample Project with Postman Support
 
-    public TokenController(ILogger<TokenController> logger, 
-        ITokenAppService tokenAppService,
-        IOptionsSnapshot<JwtRefreshTokenExpiresOptions> jwtRefreshTokenExpiresOptions)
-    {
-        _logger = logger;
-        _tokenAppService = tokenAppService;
-        _jwtRefreshTokenExpiresOptions = jwtRefreshTokenExpiresOptions;
-    }
+A complete working example is available in the [`/sample`](./sample) folder.
 
-    private string GetRemoteIpAddress()
-    {
-        return this.Request?.HttpContext?.Connection?
-            .RemoteIpAddress?.ToString();
-    }
+It demonstrates:
 
-    [HttpPost("")]
-    public async Task<IActionResult> PostAsync([FromForm] string userId, 
-      [FromForm] string password, CancellationToken cancellationToken)
-    {
-        var token = await _tokenAppService.CreateAsync(userId, 
-            password, _jwtRefreshTokenExpiresOptions.Value.CreateMilliseconds,
-            GetRemoteIpAddress(), cancellationToken);
+- ✅ How to configure and run the minimal API
+- 🔐 Full antiforgery protection (XSRF)
+- 🧪 Token creation, refresh, and revocation endpoints
+- 📬 A Postman Collection to test the full flow locally
 
-        return new TokenResult(token);
-    }
-
-    [Authorize("Bearer")]
-    [HttpPatch("")]
-    public async Task<IActionResult> RefreshAsync([FromForm] string tokenId,
-      [FromForm] string userId, CancellationToken cancellationToken)
-    {
-        var token = await _tokenAppService.RefreshAsync(tokenId, 
-            userId, _jwtRefreshTokenExpiresOptions.Value.RefreshMilliseconds,
-            GetRemoteIpAddress(), cancellationToken);
-
-        return new TokenResult(token);
-    }
-
-    [Authorize("Bearer")]
-    [HttpPatch("/revoke")]
-    public async Task<IActionResult> RevokeAsync([FromForm] string tokenId,
-      [FromForm] string userId, CancellationToken cancellationToken)
-    {
-        var updated = await _tokenAppService.TryRevokeAsync(tokenId, 
-            userId, GetRemoteIpAddress(), cancellationToken);
-
-        return Ok(new { updated = updated });
-    }
-}
-```
-
-See integration test api [here](https://github.com/brunobrandes/jwt-refresh-token/tree/main/src/Tests/Jwt.Refresh.Token.Tests.Integrations.Api)
+📄 See full instructions in [`/sample/README.md`](./sample/README.md)
 
 ### TODO
 
-- [ ] Incrise unit test coverage
-- [ ] Create pipeline
+- [x] Incrise unit test coverage
+- [x] Create pipeline
+- [ ] Implement Mongo DB infrastructure
 - [ ] Implement PostgreeSql infrastructure
 - [ ] Implement Sql Databse infrastructure
