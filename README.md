@@ -53,8 +53,8 @@ Implement IUserRepository for get user by id and password. UserId
       "AlgorithmKey": "YOUR_ALGORITHM_KEY"
     },
     "Expires": {
-     "CreateExpiresInMs": 300000, // Access Token lifespan: 5 minutes
-  "RefreshExpiresInMs": 604800000 // Refresh Token lifespan: 7 days
+     "CreateExpiresInMs": 300000,
+  "RefreshExpiresInMs": 604800000
     },
     "Cosmos": {
       "ConnectionString": "YOUR_COSMOS_CONNECTIONSTRING",
@@ -88,7 +88,7 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-XSRF-TOKEN";
 });
 
-/builder.Services.ConfigureHttpJsonOptions(options =>
+builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
 });
