@@ -1,5 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using Jwt.Refresh.Token.Domain.Entities.Repositories;
+using Jwt.Refresh.Token.Infra.AspNetCore.Endpoints;
+using Jwt.Refresh.Token.Infra.AspNetCore.Serializers;
 using Jwt.Refresh.Token.Infra.Cosmos.Extensions;
 using Jwt.Refresh.Token.Sample.Ui.Api.Entities.Repositories;
 using Microsoft.Azure.Cosmos;
@@ -15,6 +18,14 @@ builder.Services.AddAntiforgery(options =>
     // Set the header name that the antiforgery system expects.
     // This should match what the client sends (e.g., X-XSRF-TOKEN).
     options.HeaderName = "X-XSRF-TOKEN";
+});
+
+// Registers the source-generated System.Text.Json context used for serializing tokens and responses.
+// This improves performance and avoids runtime errors when reflection-based serialization is disabled.
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
 });
 
 // Register refresh token services
@@ -60,6 +71,8 @@ builder.Services.AddAuthentication("Bearer")
     };
 });
 
+// Configures the default authorization policy used by the protected endpoints.
+// The "Bearer" policy requires a valid JWT token and is associated with the "Bearer" authentication scheme.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Bearer", policy =>
@@ -77,6 +90,9 @@ app.UseAuthorization();
 // Use CSRF protection middleware
 app.UseAntiforgery();
 
-// Map refresh token endpoints
+// Maps the default refresh token endpoints (POST /token, PATCH /token, PATCH /revoke).
+// // These endpoints are fully integrated with antiforgery and JWT security mechanisms.
+// // If needed, you can implement your own custom routes by invoking ITokenAppService directly.
+app.MapTokenEndpoints("token");
 
 app.Run();

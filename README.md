@@ -88,6 +88,8 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-XSRF-TOKEN";
 });
 
+// Registers the source-generated System.Text.Json context used for serializing tokens and responses.
+// This improves performance and avoids runtime errors when reflection-based serialization is disabled.
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
@@ -136,6 +138,8 @@ builder.Services.AddAuthentication("Bearer")
     };
 });
 
+// Configures the default authorization policy used by the protected endpoints.
+// The "Bearer" policy requires a valid JWT token and is associated with the "Bearer" authentication scheme.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Bearer", policy =>
