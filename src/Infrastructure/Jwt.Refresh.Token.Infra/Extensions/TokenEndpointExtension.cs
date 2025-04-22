@@ -48,7 +48,7 @@ public static class TokenEndpointExtension
         })
             .DisableAntiforgery();
 
-        app.MapPatch($"/{pattern}", [Authorize("Bearer")] async (
+        app.MapPatch($"/{pattern}", async (
             HttpContext context,
             [FromServices] ITokenAppService tokenAppService,
             [FromServices] IOptionsSnapshot<JwtRefreshTokenConfig> jwtRefreshTokenConfig,
@@ -71,9 +71,9 @@ public static class TokenEndpointExtension
             }
 
             await context.WriteAsync(token);
-        });
+        }).RequireAuthorization("Bearer");
 
-        app.MapDelete($"/{pattern}", [Authorize("Bearer")] async (
+        app.MapPatch($"/{pattern}",  async (
             HttpContext context,
             [FromServices] ITokenAppService tokenAppService,
             [FromForm] string tokenId,
@@ -84,7 +84,7 @@ public static class TokenEndpointExtension
                 context.Connection.RemoteIpAddress?.ToString(), cancellationToken);
             
             return Results.Ok(new { updated = updated });
-        });
+        }).RequireAuthorization("Bearer");
 
         return app;
     }
