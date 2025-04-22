@@ -48,10 +48,11 @@ public static class TokenEndpointExtension
         })
             .DisableAntiforgery();
 
-        app.MapPatch("/{pattern}", [Authorize("Bearer")] async (
+        app.MapPatch($"/{pattern}", [Authorize("Bearer")] async (
             HttpContext context,
             [FromServices] ITokenAppService tokenAppService,
             [FromServices] IOptionsSnapshot<JwtRefreshTokenConfig> jwtRefreshTokenConfig,
+            [FromServices] IAntiforgery antiforgery,
             [FromForm] string tokenId,
             [FromForm] string userId,
             CancellationToken cancellationToken) =>
@@ -62,11 +63,17 @@ public static class TokenEndpointExtension
                 jwtRefreshTokenConfig.Value.Expires.RefreshExpiresInMs,
                 context.Connection.RemoteIpAddress?.ToString(),
                 cancellationToken);
+            
+            if (token.Status == TokenStatusConst.Authorized)
+            {
+                var tokens = antiforgery.GetAndStoreTokens(context);
+                context.Response.Headers["X-XSRF-TOKEN"] = tokens.RequestToken!;  
+            }
 
             await context.WriteAsync(token);
         });
 
-        app.MapPatch("/{pattern}/revoke", [Authorize("Bearer")] async (
+        app.MapDelete($"/{pattern}", [Authorize("Bearer")] async (
             HttpContext context,
             [FromServices] ITokenAppService tokenAppService,
             [FromForm] string tokenId,
