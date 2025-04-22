@@ -73,11 +73,11 @@ public static class TokenEndpointExtension
             await context.WriteAsync(token);
         }).RequireAuthorization("Bearer");
 
-        app.MapDelete($"/{pattern}/{{tokenId}}/{{userId}}",  async (
+        app.MapDelete($"/{pattern}",  async (
             HttpContext context,
             [FromServices] ITokenAppService tokenAppService,
-            [FromRoute] string tokenId,
-            [FromRoute] string userId,
+            [FromForm] string tokenId,
+            [FromForm] string userId,
             CancellationToken cancellationToken) =>
         {
             var updated = await tokenAppService.TryRevokeAsync(tokenId, userId, 
