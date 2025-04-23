@@ -72,10 +72,10 @@ public static class TokenEndpointExtension
             [FromForm] string userId,
             CancellationToken cancellationToken) =>
         {
-            var updated = await tokenAppService.TryRevokeAsync(tokenId, userId, 
+            _ = await tokenAppService.TryRevokeAsync(tokenId, userId, 
                 context.Connection.RemoteIpAddress?.ToString(), cancellationToken);
             
-            return Results.Ok(new { updated = updated });
+            return Results.NoContent();
         })
             .RequireAuthorization("Bearer")
             .DisableAntiforgery();
