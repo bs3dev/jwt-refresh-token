@@ -77,17 +77,6 @@ Now, configure it in your application's Program.cs (startup file):
 
 ```csharp
 
-builder.Services.AddAntiforgery(options =>
-{
-    // Allow client-side tools (like Swagger or Postman) to access the antiforgery cookie.
-    // This is necessary to manually include the cookie in requests for CSRF validation.
-    options.Cookie.HttpOnly = false;
-
-    // Set the header name that the antiforgery system expects.
-    // This should match what the client sends (e.g., X-XSRF-TOKEN).
-    options.HeaderName = "X-XSRF-TOKEN";
-});
-
 // Registers the source-generated System.Text.Json context used for serializing tokens and responses.
 // This improves performance and avoids runtime errors when reflection-based serialization is disabled.
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -157,7 +146,7 @@ app.UseAuthorization();
 // Maps the default refresh token endpoints (POST /token, PATCH /token, PATCH /revoke).
 // These endpoints are fully integrated with antiforgery and JWT security mechanisms.
 // If needed, you can implement your own custom routes by invoking ITokenAppService directly.
-app.MapTokenEndpoints();
+app.MapTokenEndpoints("token");
 
 app.Run();
 
@@ -174,7 +163,6 @@ A complete working example is available in the [`/sample`](./sample) folder.
 It demonstrates:
 
 - ✅ How to configure and run the minimal API
-- 🔐 Full antiforgery protection (XSRF)
 - 🧪 Token creation, refresh, and revocation endpoints
 - 📬 A Postman Collection to test the full flow locally
 
