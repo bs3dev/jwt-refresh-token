@@ -14,7 +14,8 @@ public static class TokenExtension
             CreatedAt = DateTimeOffset.UtcNow,
             CreatedIpAddress = tokenEntity.CreatedIpAddress,
             RevokedAt = DateTimeOffset.UtcNow,
-            RevokedIpAddress = ipAddress
+            RevokedIpAddress = ipAddress,
+            Ttl = 1.MinutesToMilliseconds()
         };
     }
 
