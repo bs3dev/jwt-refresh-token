@@ -40,11 +40,6 @@ public static class TokenEndpointExtension
                 context.Connection.RemoteIpAddress?.ToString(),
                 cancellationToken);
 
-            if (token.Status == TokenStatusConst.Authorized)
-            {
-                context.IssueAntiforgeryToken(antiforgery, token.UserId);
-            }
-            
             await context.WriteAsync(token);
         })
             .DisableAntiforgery();
@@ -65,13 +60,10 @@ public static class TokenEndpointExtension
                 context.Connection.RemoteIpAddress?.ToString(),
                 cancellationToken);
             
-            if (token.Status == TokenStatusConst.Authorized)
-            {
-                context.IssueAntiforgeryToken(antiforgery, token.UserId); 
-            }
-
             await context.WriteAsync(token);
-        }).RequireAuthorization("Bearer");
+        })
+            .RequireAuthorization("Bearer")
+            .DisableAntiforgery();
 
         app.MapDelete($"/{pattern}",  async (
             HttpContext context,
@@ -84,7 +76,9 @@ public static class TokenEndpointExtension
                 context.Connection.RemoteIpAddress?.ToString(), cancellationToken);
             
             return Results.Ok(new { updated = updated });
-        }).RequireAuthorization("Bearer");
+        })
+            .RequireAuthorization("Bearer")
+            .DisableAntiforgery();
 
         return app;
     }
