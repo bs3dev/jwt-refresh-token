@@ -25,7 +25,16 @@
 							"const tokenId = json.id || json.Id;",
 							"",
 							"if (jwt) pm.environment.set('jwt', jwt);",
-							"if (tokenId) pm.environment.set('tokenId', tokenId);",
+							"if (tokenId) pm.environment.set('tokenId', tokenId);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
 							""
 						],
 						"type": "text/javascript",
@@ -111,7 +120,7 @@
 		{
 			"name": "Revoke Token",
 			"request": {
-				"method": "PATCH",
+				"method": "DELETE",
 				"header": [
 					{
 						"key": "Authorization",
@@ -138,14 +147,14 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:5001/revoke",
+					"raw": "http://localhost:5001/token",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5001",
 					"path": [
-						"revoke"
+						"token"
 					]
 				}
 			},

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Jwt.Refresh.Token.Application.Interfaces;
 using Jwt.Refresh.Token.Domain.Constants;
+using Jwt.Refresh.Token.Domain.Extensions;
 using Jwt.Refresh.Token.Tests.Integration.Cosmos.Fixtures;
 
 namespace Jwt.Refresh.Token.Tests.Integration.Cosmos;
@@ -35,10 +36,13 @@ public class TokenAppServiceIntegrationTests : IClassFixture<TokenTestFixture>
         var created = await _tokenAppService.CreateAsync(userId, password,  expiry, ip, CancellationToken.None);
         created.Status.Should().Be(TokenStatusConst.Authorized);
         created.AccessToken.Should().NotBeNull();
-
+        
         // Refresh token
         var refreshed = await _tokenAppService.RefreshAsync(created.Id, userId, expiry, ip, CancellationToken.None);
         refreshed.Status.Should().Be(TokenStatusConst.Authorized);
         refreshed.AccessToken.Should().NotBe(created.AccessToken);
+        
+        var revoked = await _tokenAppService.TryRevokeAsync(refreshed.Id, refreshed.UserId, ip, CancellationToken.None);
+        revoked.Should().Be(1);
     }
 }

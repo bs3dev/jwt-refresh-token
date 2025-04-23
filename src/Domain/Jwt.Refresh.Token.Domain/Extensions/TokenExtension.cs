@@ -4,6 +4,8 @@ namespace Jwt.Refresh.Token.Domain.Extensions;
 
 public static class TokenExtension
 {
+    private const int RevokeExpiresMilliseconds = 30000;
+        
     public static TokenEntity ToRevokeTokenEntity(this TokenEntity tokenEntity, string ipAddress)
     {
         return new TokenEntity
@@ -15,7 +17,7 @@ public static class TokenExtension
             CreatedIpAddress = tokenEntity.CreatedIpAddress,
             RevokedAt = DateTimeOffset.UtcNow,
             RevokedIpAddress = ipAddress,
-            Ttl = 1.MinutesToMilliseconds()
+            Ttl = RevokeExpiresMilliseconds.MillisecondsToSeconds()
         };
     }
 
@@ -28,7 +30,7 @@ public static class TokenExtension
             AccessToken = token.AccessToken,
             CreatedAt = DateTimeOffset.UtcNow,
             CreatedIpAddress = ipAddress,
-            Ttl = (int)expiresMilliseconds.ToTimeSpanMilliseconds().TotalSeconds
+            Ttl = expiresMilliseconds.MillisecondsToSeconds()
         };  
     }
 }
