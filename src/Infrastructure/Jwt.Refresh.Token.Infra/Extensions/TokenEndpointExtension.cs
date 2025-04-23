@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using Jwt.Refresh.Token.Application.Interfaces;
 using Jwt.Refresh.Token.Domain.Configs;
 using Jwt.Refresh.Token.Domain.Constants;
+using Jwt.Refresh.Token.Domain.Services.Interfaces;
 using Jwt.Refresh.Token.Infra.Extensions;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -40,8 +42,7 @@ public static class TokenEndpointExtension
 
             if (token.Status == TokenStatusConst.Authorized)
             {
-                var tokens = antiforgery.GetAndStoreTokens(context);
-                context.Response.Headers["X-XSRF-TOKEN"] = tokens.RequestToken!;  
+                context.IssueAntiforgeryToken(antiforgery, token.UserId);
             }
             
             await context.WriteAsync(token);
@@ -66,8 +67,7 @@ public static class TokenEndpointExtension
             
             if (token.Status == TokenStatusConst.Authorized)
             {
-                var tokens = antiforgery.GetAndStoreTokens(context);
-                context.Response.Headers["X-XSRF-TOKEN"] = tokens.RequestToken!;  
+                context.IssueAntiforgeryToken(antiforgery, token.UserId); 
             }
 
             await context.WriteAsync(token);
