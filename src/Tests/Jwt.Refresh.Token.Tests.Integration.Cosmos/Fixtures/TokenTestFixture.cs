@@ -51,7 +51,7 @@ public class TokenTestFixture : IAsyncLifetime
 
         services.AddJwtRefreshTokenCosmosServices(_configuration, _cosmosClientOptions);
         
-        services.AddSingleton<IUserRepository, FakeUserRepository>();
+        services.AddSingleton<ICredentialRepository, FakeCredentialRepository>();
 
         Services = services.BuildServiceProvider();
 

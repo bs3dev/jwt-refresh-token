@@ -1,6 +1,6 @@
 namespace Jwt.Refresh.Token.Domain.Entities.Repositories;
 
-public interface IUserRepository
+public interface ICredentialRepository
 {
     /// <summary>
     /// Queries the user ID based on the given credentials. Returns the user ID if found and valid; otherwise, returns null.

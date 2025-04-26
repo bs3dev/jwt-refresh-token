@@ -11,16 +11,16 @@ namespace Jwt.Refresh.Token.Application;
 public class TokenAppService : ITokenAppService
     {
         private readonly ITokenRepository _tokenRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly ICredentialRepository _credentialRepository;
         private readonly IJwtAccessTokenService _jwtAccessTokenService;
 
         public TokenAppService(
             ITokenRepository tokenRepository, 
-            IUserRepository userRepository,
+            ICredentialRepository credentialRepository,
             IJwtAccessTokenService jwtAccessTokenService)
         {
             _tokenRepository = tokenRepository;
-            _userRepository = userRepository;
+            _credentialRepository = credentialRepository;
             _jwtAccessTokenService = jwtAccessTokenService;
         }
 
@@ -38,7 +38,7 @@ public class TokenAppService : ITokenAppService
                 
             try
             {
-                var entityUserId = await _userRepository.GetAsync(userId, password, cancellationToken);
+                var entityUserId = await _credentialRepository.GetAsync(userId, password, cancellationToken);
 
                 if (string.IsNullOrEmpty(entityUserId))
                 {

@@ -13,7 +13,7 @@ namespace Jwt.Refresh.Token.Tests.Unit.Application;
 public class TokenAppServiceTests
 {
     private readonly Mock<ITokenRepository> _tokenRepositoryMock;
-    private readonly Mock<IUserRepository> _userRepositoryMock;
+    private readonly Mock<ICredentialRepository> _credentialRepository;
     private readonly Mock<IJwtAccessTokenService> _jwtAccessTokenServiceMock;
 
     private readonly ITokenAppService _tokenAppService;
@@ -25,11 +25,11 @@ public class TokenAppServiceTests
     public TokenAppServiceTests()
     {
         _tokenRepositoryMock = new Mock<ITokenRepository> { };
-        _userRepositoryMock = new Mock<IUserRepository> { };
+        _credentialRepository = new Mock<ICredentialRepository> { };
         _jwtAccessTokenServiceMock = new Mock<IJwtAccessTokenService> { };
 
         _tokenAppService = new TokenAppService(_tokenRepositoryMock.Object,
-            _userRepositoryMock.Object, _jwtAccessTokenServiceMock.Object);
+            _credentialRepository.Object, _jwtAccessTokenServiceMock.Object);
 
         _userId = "test@bs3.dev";
         _password = "password_test";
@@ -41,7 +41,7 @@ public class TokenAppServiceTests
     {
         var cancellationToken = CancellationToken.None;
 
-        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, cancellationToken))
+        _credentialRepository.Setup(x => x.GetAsync(_userId, _password, cancellationToken))
             .ReturnsAsync(_userId);
 
         _jwtAccessTokenServiceMock.Setup(x => x.GetAsync(_userId, It.IsAny<int>(), It.IsAny<CancellationToken>()))
@@ -70,7 +70,7 @@ public class TokenAppServiceTests
     [Fact]
     public async Task Create_Token_UserIdNotFound_ReturnsUnauhtorized()
     {
-        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
+        _credentialRepository.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
             .ReturnsAsync(string.Empty);
 
         var token = await _tokenAppService.CreateAsync(_userId, _password, 1.MinutesToMilliseconds(), _ipAddress,
@@ -82,7 +82,7 @@ public class TokenAppServiceTests
     [Fact]
     public async Task Create_Token_UnexpectedError_ReturnsError()
     {
-        _userRepositoryMock.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
+        _credentialRepository.Setup(x => x.GetAsync(_userId, _password, CancellationToken.None))
             .ThrowsAsync(new Exception("Unexpected error"));
 
         var token = await _tokenAppService.CreateAsync(_userId, _password, 1.MinutesToMilliseconds(), _ipAddress,

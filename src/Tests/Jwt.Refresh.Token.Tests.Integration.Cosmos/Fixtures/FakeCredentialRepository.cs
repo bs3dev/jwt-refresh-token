@@ -5,7 +5,7 @@ namespace Jwt.Refresh.Token.Tests.Integration.Cosmos.Fixtures;
 /// <summary>
 /// Fake user repository for integration testing. Always returns the userId if input is valid.
 /// </summary>
-public class FakeUserRepository : IUserRepository
+public class FakeCredentialRepository : ICredentialRepository
 {
     /// <summary>
     /// Returns the userId if both userId and password are not empty; otherwise, returns null.

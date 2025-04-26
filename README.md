@@ -41,7 +41,7 @@ dotnet add package Jwt.Refresh.Token.Cosmos --prerelease
 
 The first step to do is provision your cosmos db, or if you already have it, create the token container id (*choose name you want*) with partitionKey **'/userId'**.
 
-Implement IUserRepository for get user by id and password. UserId
+Implement ICredentialRepository for get userId by id and password.
 
 2. ✯ Configure settings app:
 ```json
@@ -97,9 +97,9 @@ builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration, new Cos
     }
 });
 
-// Registers a custom implementation of IUserRepository used to validate credentials and retrieve the userId,
+// Registers a custom implementation of ICredentialRepository used to validate credentials and retrieve the userId,
 // which is later assigned to the ClaimTypes.NameIdentifier in the generated JWT.
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICredentialRepository, CredentialRepository>();
 
 // 🔐 Secure JWT Authentication Configuration
 builder.Services.AddAuthentication("Bearer")
