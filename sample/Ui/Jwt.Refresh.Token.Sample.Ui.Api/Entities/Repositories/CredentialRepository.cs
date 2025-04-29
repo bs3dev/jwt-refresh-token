@@ -3,10 +3,10 @@ using Jwt.Refresh.Token.Domain.Entities.Repositories;
 namespace Jwt.Refresh.Token.Sample.Ui.Api.Entities.Repositories;
 
 /// <summary>
-/// Example implementation of IUserRepository for demonstration purposes only.
+/// Example implementation of ICredentialRepository for demonstration purposes only.
 /// This simulates user credential validation using a static in-memory check.
 /// </summary>
-public class UserRepository : IUserRepository
+public class CredentialRepository : ICredentialRepository
 {
     private static readonly UserEntity SampleUser = new UserEntity { };
 

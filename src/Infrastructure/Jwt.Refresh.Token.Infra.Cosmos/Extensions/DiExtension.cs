@@ -16,15 +16,13 @@ namespace Jwt.Refresh.Token.Infra.Cosmos.Extensions;
 public static class DiExtension
 {
     /// <summary>
-    /// Registers the Cosmos DB implementation for ITokenRepository, including validated configuration.
+    /// Registers the Cosmos DB implementation for ITokenRepository, expecting a CosmosClient to be provided.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <param name="configuration">The application configuration source.</param>
-    /// <param name="cosmosClientOptions">Options to configure the Cosmos DB client.</param>
     public static void AddJwtRefreshTokenCosmosServices(
         this IServiceCollection services,
-        IConfiguration configuration,
-        CosmosClientOptions cosmosClientOptions)
+        IConfiguration configuration)
     {
         // Register core JWT refresh token services (Descriptor, Expires, ITokenAppService, etc.)
         services.AddJwtRefreshTokenServices(configuration);
@@ -36,19 +34,17 @@ public static class DiExtension
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // Register the config as its shared interface
         services.AddSingleton<IJwtRefreshTokenDatabaseConfig>(sp =>
             sp.GetRequiredService<IOptions<JwtRefreshTokenCosmosConfig>>().Value);
 
-        // Register the token repository using Cosmos DB
+        // Expect that a CosmosClient is already registered
         services.AddScoped<ITokenRepository>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<JwtRefreshTokenCosmosConfig>>().Value;
-            return new TokenRepository(new CosmosClient(config.ConnectionString, cosmosClientOptions),
-                config.DatabaseName, config.TokenContainerId);
+            var cosmosClient = sp.GetRequiredService<CosmosClient>();
+            return new TokenRepository(cosmosClient, config.DatabaseName, config.TokenContainerId);
         });
 
-        // Force validation to run even if nothing directly resolves the config yet
         services.PostConfigure<JwtRefreshTokenCosmosConfig>(_ => { });
     }
 }

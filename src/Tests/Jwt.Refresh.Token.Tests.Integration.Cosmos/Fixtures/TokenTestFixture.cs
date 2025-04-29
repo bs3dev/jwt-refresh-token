@@ -49,7 +49,10 @@ public class TokenTestFixture : IAsyncLifetime
             }
         };
 
-        services.AddJwtRefreshTokenCosmosServices(_configuration, _cosmosClientOptions);
+        services.AddSingleton(new CosmosClient(_configuration["JwtRefreshToken:CosmosDb:ConnectionString"],
+            _cosmosClientOptions));
+        
+        services.AddJwtRefreshTokenCosmosServices(_configuration);
         
         services.AddSingleton<ICredentialRepository, FakeCredentialRepository>();
 

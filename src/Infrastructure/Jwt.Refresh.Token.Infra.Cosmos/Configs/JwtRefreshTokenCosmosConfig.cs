@@ -5,7 +5,7 @@ namespace Jwt.Refresh.Token.Infra.Cosmos.Configs;
 
 public class JwtRefreshTokenCosmosConfig : IJwtRefreshTokenDatabaseConfig
 {
-    public const string SectionName = "JwtRefreshToken:Cosmos";
+    public const string SectionName = "JwtRefreshToken:CosmosDb";
     
     [Required]
     public string ConnectionString { get; set; }

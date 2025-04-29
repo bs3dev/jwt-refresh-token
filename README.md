@@ -84,18 +84,25 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
 });
 
-// Register refresh token services
-builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration, new CosmosClientOptions
-{
-    ConnectionMode = ConnectionMode.Gateway,
-    AllowBulkExecution = true,
-    SerializerOptions = new CosmosSerializationOptions
+// Registers the CosmosClient instance with customized options for connection and serialization.
+// The client is registered as a singleton to enable efficient reuse across the application and avoid
+// issues with socket exhaustion or high memory usage. This instance will be injected into repositories
+// and services that depend on Cosmos DB access.
+builder.Services.AddSingleton(new CosmosClient(builder.Configuration["JwtRefreshToken:CosmosDb:ConnectionString"],
+    new CosmosClientOptions
     {
-        Indented = true,
-        PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase,
-        IgnoreNullValues = true
-    }
-});
+        ConnectionMode = ConnectionMode.Gateway,
+        AllowBulkExecution = true,
+        SerializerOptions = new CosmosSerializationOptions
+        {
+            Indented = true,
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase,
+            IgnoreNullValues = true
+        }
+    }));
+
+// Register refresh token services
+builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration);
 
 // Registers a custom implementation of ICredentialRepository used to validate credentials and retrieve the userId,
 // which is later assigned to the ClaimTypes.NameIdentifier in the generated JWT.

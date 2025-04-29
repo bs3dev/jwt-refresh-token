@@ -9,19 +9,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) CSRF protection
-builder.Services.AddAntiforgery(options =>
-{
-    // Allow client-side tools (like Swagger or Postman) to access the antiforgery cookie.
-    // This is necessary to manually include the cookie in requests for CSRF validation.
-    options.Cookie.HttpOnly = false;
-
-    // Set the header name that the antiforgery system expects.
-    // This should match what the client sends (e.g., X-XSRF-TOKEN).
-    options.HeaderName = "X-XSRF-TOKEN";
-});
-
-// 2) Minimal API & JSON options
+// 1) Minimal API & JSON options
 // Registers the source-generated System.Text.Json context used for serializing tokens and responses.
 // This improves performance and avoids runtime errors when reflection-based serialization is disabled.
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -29,6 +17,24 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.TypeInfoResolverChain.Add(AppJsonContext.Default);
 });
+
+// 2) CosmosClient singleton
+// Registers the CosmosClient instance with customized options for connection and serialization.
+// The client is registered as a singleton to enable efficient reuse across the application and avoid
+// issues with socket exhaustion or high memory usage. This instance will be injected into repositories
+// and services that depend on Cosmos DB access.
+builder.Services.AddSingleton(new CosmosClient(builder.Configuration["JwtRefreshToken:CosmosDb:ConnectionString"],
+    new CosmosClientOptions
+    {
+        ConnectionMode = ConnectionMode.Gateway,
+        AllowBulkExecution = true,
+        SerializerOptions = new CosmosSerializationOptions
+        {
+            Indented = true,
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase,
+            IgnoreNullValues = true
+        }
+    }));
 
 // 3) Register core services
 // Register refresh token services
@@ -45,9 +51,9 @@ builder.Services.AddJwtRefreshTokenCosmosServices(builder.Configuration, new Cos
 });
 
 // 4) Register custom user repository
-// Registers a custom implementation of IUserRepository used to validate credentials and retrieve the userId,
+// Registers a custom implementation of ICredentialRepository used to validate credentials and retrieve the userId,
 // which is later assigned to the ClaimTypes.NameIdentifier in the generated JWT.
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICredentialRepository, CredentialRepository>();
 
 // 5) Authentication & Authorization
 // 🔐 Secure JWT Authentication Configuration
